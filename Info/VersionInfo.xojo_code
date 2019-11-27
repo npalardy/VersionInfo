@@ -44,6 +44,18 @@ Protected Class VersionInfo
 		End Sub
 	#tag EndMethod
 
+	#tag Method, Flags = &h0
+		Function Operator_convert() As string
+		  
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function ToString() As string
+		  
+		End Function
+	#tag EndMethod
+
 	#tag Method, Flags = &h1
 		Protected Sub windowsInfo()
 		  // wrapped just to make sure this code doesnt try to get compiled on other targets

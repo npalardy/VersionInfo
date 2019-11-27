@@ -144,7 +144,83 @@ Inherits Info.VersionInfo
 		Protected Sub windowsInfo(f as folderitem)
 		  // wrapped just to make sure this code doesnt try to get compiled on other targets
 		  #If TargetWindows
-		    Break
+		    
+		    ' from https://docs.microsoft.com/en-ca/windows/win32/api/winver/nf-winver-getfileversioninfosizeexa
+		    ' DWORD GetFileVersionInfoSizeA(LPCSTR  lptstrFilename, LPDWORD lpdwHandle);
+		    ' from https://docs.microsoft.com/en-ca/windows/win32/api/winver/nf-winver-getfileversioninfoexa
+		    ' BOOL GetFileVersionInfoA(LPCSTR lptstrFilename,DWORD  dwHandle,DWORD  dwLen,LPVOID lpData);
+		    ' from https://docs.microsoft.com/en-ca/windows/win32/api/winver/nf-winver-verqueryvaluea
+		    ' BOOL VerQueryValueA(LPCVOID pBlock,LPCSTR  lpSubBlock,LPVOID  *lplpBuffer,PUINT   puLen);
+		    
+		    ' from https://docs.microsoft.com/en-ca/windows/win32/api/winver/nf-winver-getfileversioninfosizeexw
+		    ' DWORD GetFileVersionInfoSizeExW( DWORD   dwFlags, LPCWSTR lpwstrFilename, LPDWORD lpdwHandle );
+		    ' from https://docs.microsoft.com/en-ca/windows/win32/api/winver/nf-winver-getfileversioninfoexw
+		    ' BOOL GetFileVersionInfoExW( DWORD   dwFlags, LPCWSTR lpwstrFilename, DWORD   dwHandle, DWORD   dwLen, LPVOID  lpData );
+		    ' from https://docs.microsoft.com/en-ca/windows/win32/api/winver/nf-winver-verqueryvaluew
+		    ' BOOL VerQueryValueW( LPCVOID pBlock, LPCWSTR lpSubBlock, LPVOID  *lplpBuffer, PUINT   puLen );
+		    
+		    If System.IsFunctionAvailable( "GetFileVersionInfoSizeExW", "Version" ) Then
+		      'Value                  Meaning
+		      'FILE_VER_GET_LOCALISED Loads the entire version resource (both strings And binary version information) from the corresponding MUI file, If available.
+		      '0x01
+		      '
+		      'FILE_VER_GET_NEUTRAL   Loads the version resource strings from the corresponding MUI file, If available, And loads the binary version information 
+		      '0x002                  (VS_FIXEDFILEINFO) from the corresponding language-neutral file, If available.
+		      
+		      Dim dwFlags As UInt32 = &h2
+		      
+		      Soft Declare Function GetFileVersionInfoSizeExW Lib "Version" ( dwFlags As UInt32, lpwstrFilename As WString, ByRef lpdwHandle As UInt32 ) As UInt32
+		      Soft Declare Function GetFileVersionInfoExW Lib "Version" ( dwFlags As UInt32, lpwstrFilename As WString, dwHandle As UInt32, dwLen As UInt32, lpData As Ptr) As Integer
+		      Soft Declare Function VerQueryValueW Lib "Version" ( pBlock As Ptr, lpSubBlock As WString, ByRef lplpBuffer As Ptr, ByRef puLen As UInt32) As Integer
+		      
+		      Dim unused As UInt32
+		      Dim size As UInt32 = GetFileVersionInfoSizeExW( dwFlags, f.NativePath, unused )
+		      
+		      If size = 0 Then
+		        Return
+		      End If
+		      
+		      Dim mb As New MemoryBlock(size)
+		      
+		      Dim retValue As Integer = GetFileVersionInfoExW ( dwFlags, f.NativePath, unused, size, mb) 
+		      If retValue = 0 Then
+		        Break
+		        Return
+		      End If
+		      
+		      'struct LANGANDCODEPAGE {
+		      'WORD wLanguage;
+		      'WORD wCodePage;
+		      '} *lpTranslate;
+		      '
+		      '// Read the list of languages and code pages.
+		      '
+		      'VerQueryValue(pBlock, 
+		      'Text("\\VarFileInfo\\Translation"),
+		      '(LPVOID*)&lpTranslate,
+		      '&cbTranslate);
+		      '
+		      'Dim bufPtr As Ptr
+		      'Dim bufLen As UInt32
+		      'retValue = VerQueryValueW( mb, "\StringFileInfo\"++"\FileVersion", bufPtr, bufLen)
+		      'If retValue = 0 Then
+		      'Break
+		      'Return
+		      'End If
+		      'Break
+		      
+		    Elseif System.IsFunctionAvailable( "GetFileVersionInfoSizeExA", "Kernel32" ) Then
+		      Soft Declare Function GetFileVersionInfoSizeExA Lib "Kernel32" ( lptstrFilename As CString, ByRef lpdwHandle As UInt32) As UInt32
+		      Soft Declare Function GetFileVersionInfoExA Lib "Kernel32" ( lptstrFilename As CString, dwHandle As UInt32, dwLen As UInt32, lpData As Ptr) As Integer
+		      
+		      Dim dwHandle As UInt32
+		      Dim result As Integer = GetFileVersionInfoSizeExA( f.NativePath, dwHandle)
+		      
+		      Break
+		      
+		      'Soft Declare Function GetFileVersionInfoExA Lib "Kernel32" ( lptstrFilename As CString, dwHandle As UInt32, dwLen As UInt32, lpData As Ptr) As Integer
+		    End If
+		    
 		  #EndIf
 		End Sub
 	#tag EndMethod

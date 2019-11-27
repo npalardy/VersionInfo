@@ -45,6 +45,70 @@ Inherits Info.VersionInfo
 	#tag EndMethod
 
 	#tag Method, Flags = &h1
+		Protected Function macOSConvertToString() As String
+		  // wrapped just to make sure this code doesnt try to get compiled on other targets
+		  #If TargetMacOS
+		    
+		    If m_CachedOSName = "" Then
+		      
+		      'Dim rValue As String
+		      
+		      'NSString * operatingSystemVersionString = [[NSProcessInfo processInfo] operatingSystemVersionString];
+		      
+		      'Declare Function NSClassFromString Lib "Foundation" ( className As CFStringRef ) As Ptr
+		      'Declare Function processInfo Lib "Foundation" selector "processInfo" ( ClassRef As Ptr ) As Ptr
+		      '
+		      'Dim myInfo As Ptr = processInfo( NSClassFromString( "NSProcessInfo" ) )
+		      '
+		      'Declare Function operatingSystemVersionString Lib "Foundation" selector "operatingSystemVersionString" ( NSProcessInfo As Ptr ) As CFStringRef
+		      'rvalue = operatingSystemVersionString( myInfo )
+		      '
+		      ''Declare Function operatingSystemName Lib "Foundation" selector "operatingSystemName" ( NSProcessInfo As Ptr ) As CFStringRef
+		      ''rvalue = operatingSystemName( myInfo ) + " " + Str(m_Major) + "." + Str(m_Minor) + "." + Str(m_Patch)
+		      
+		      'Dim prefix As String
+		      '
+		      'If m_Minor <= 7 Then
+		      'prefix = "Mac OS X"
+		      'Elseif m_Minor <= 11 Then
+		      'prefix = "OS X"
+		      'Else
+		      'prefix = "macOS"
+		      'End If
+		      '
+		      'rValue = prefix  + " " + Str(m_Major) + "." + Str(m_Minor) + "." + Str(m_Patch)
+		      '
+		      'Return rValue
+		      
+		      Dim s As New shell
+		      s.Execute "/usr/sbin/system_profiler SPSoftwareDataType"
+		      
+		      If s.ErrorCode <> 0 Then
+		        Return ""
+		      End If
+		      
+		      Dim lines() As String = Split( ReplaceLineEndings( s.result, EndOfLine ), EndOfLine )
+		      
+		      For Each line As String In lines
+		        
+		        If line.InStr("System Version:") > 0 Then
+		          Dim textOfInterest As String = ReplaceAll(line,"System Version:", "")
+		          textOfInterest = textOfInterest.Trim
+		          
+		          m_CachedOSName = textOfInterest
+		          
+		        End If
+		        
+		      Next
+		      
+		    End If
+		    
+		    Return m_CachedOSName
+		  #EndIf
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h1
 		Protected Sub macOSInfo()
 		  // wrapped just to make sure this code doesnt try to get compiled on other targets
 		  #If TargetMacOS
@@ -64,6 +128,125 @@ Inherits Info.VersionInfo
 		    
 		  #EndIf
 		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function Operator_convert() As String
+		  #If TargetMacOS
+		    Return macOSConvertToString
+		  #ElseIf TargetWindows
+		    return windowsConvertToString
+		  #ElseIf TargetLinux
+		    
+		  #ElseIf TargetIOS
+		    
+		  #EndIf
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h0
+		Function ToString() As String
+		  Dim s As String = Self
+		  Return s
+		End Function
+	#tag EndMethod
+
+	#tag Method, Flags = &h1
+		Protected Function windowsConvertToString() As String
+		  // wrapped just to make sure this code doesnt try to get compiled on other targets
+		  #If TargetWindows
+		    
+		    If m_CachedOSName = "" Then
+		      
+		      ''From https://docs.microsoft.com/en-ca/windows/win32/api/winnt/ns-winnt-osversioninfoexa
+		      ''
+		      ''Operating System           Version number    dwMajorVersion    dwMinorVersion    Other
+		      ''Windows 10                    10.0*              10                 0            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		      ''Windows Server 2016           10.0*              10                 0            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		      ''Windows 8.1                    6.3*               6                 3            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		      ''Windows Server 2012 R2         6.3*               6                 3            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		      ''Windows 8                      6.2                6                 2            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		      ''Windows Server 2012            6.2                6                 2            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		      ''Windows 7                      6.1                6                 1            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		      '
+		      'Select Case True
+		      '
+		      'Case m_major = 10 
+		      '
+		      'If IsServer Then
+		      ''Windows Server 2016           10.0*              10                 0            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		      'Return "Windows Server 2016"
+		      'Else
+		      ''Windows 10                    10.0*              10                 0            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		      'return "Windows 10"
+		      'End If
+		      '
+		      'Case m_Major = 6
+		      '
+		      'Select Case m_minor
+		      '
+		      'Case 3
+		      'If IsServer Then
+		      ''Windows Server 2012 R2         6.3*               6                 3            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		      'Return "Windows Server 2012 R2"
+		      'Else
+		      ''Windows 8.1                    6.3*               6                 3            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		      'Return "Windows 8.1"
+		      'End If
+		      '
+		      'Case 2
+		      'If IsServer Then
+		      ''Windows Server 2012            6.2                6                 2            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		      'Return "Windows Server 2012"
+		      'Else
+		      ''Windows 8                      6.2                6                 2            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		      'Return "Windows 8"
+		      'End If
+		      '
+		      'Case 1
+		      'If IsServer Then
+		      ''Windows Server 2008 R2         6.1                6                 1            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		      'Return "Windows Server 2008 R2"
+		      'Else
+		      ''Windows 7                      6.1                6                 1            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		      'Return "Windows 7"
+		      'End If
+		      '
+		      'End Select
+		      '
+		      'End Select
+		      '
+		      'Return "Windows " + Str(m_Major) + "." + Str(m_Minor) + "." + Str(m_Patch)
+		      
+		      Dim s As New shell
+		      s.Execute "wmic os get Caption,CSDVersion /value"
+		      If s.errorcode <> 0 Then
+		        Return ""
+		      End If
+		      Dim lines() As String = Split( ReplaceLineEndings( s.result, EndOfLine ), EndOfLine )
+		      Dim captiontext As String
+		      Dim csdText As String
+		      
+		      For Each line As String In lines
+		        
+		        If line.InStr("Caption=") > 0 Then
+		          Dim textOfInterest As String = ReplaceAll(line,"Caption=", "")
+		          captionText = textOfInterest.Trim
+		        End If
+		        If line.InStr("CSDVersion=") > 0 Then
+		          Dim textOfInterest As String = ReplaceAll(line,"CSDVersion=", "")
+		          csdText = textOfInterest.Trim
+		        End If
+		      Next
+		      
+		      m_CachedOSName = captionText + " " + csdText
+		    End If
+		    
+		    Return m_CachedOSName
+		    
+		  #EndIf
+		  
+		End Function
 	#tag EndMethod
 
 	#tag Method, Flags = &h1
@@ -132,22 +315,11 @@ Inherits Info.VersionInfo
 		        
 		        Break
 		      End If
+		      
 		    Else
 		      
 		      
 		      If System.IsFunctionAvailable( "GetVersionExW", "Kernel32" ) Then
-		        Soft Declare Sub GetVersionExW Lib "Kernel32" ( info As Ptr )
-		        
-		        Dim info As m_WindowsOSVersionInfoEX
-		        
-		        info.dwOSVersionInfoSize = info.StringValue.LenB
-		        
-		        GetVersionExW( info )
-		        
-		        m_Major = info.dwMajorVersion
-		        m_Minor = info.dwMinorVersion
-		        m_Patch = info.dwBuildNumber
-		        
 		        'From https://docs.microsoft.com/en-ca/windows/win32/api/winnt/ns-winnt-osversioninfoexa
 		        '
 		        'Operating System           Version number    dwMajorVersion    dwMinorVersion    Other
@@ -159,17 +331,26 @@ Inherits Info.VersionInfo
 		        'Windows Server 2012            6.2                6                 2            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
 		        'Windows 7                      6.1                6                 1            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
 		        
-		        If info.UInt8Value(154) <> 1 Then
+		        Soft Declare Function GetVersionExW Lib "Kernel32" ( ByRef info As m_WindowsOSVersionInfoEX ) As Integer
+		        
+		        Dim info As m_WindowsOSVersionInfoEX
+		        info.dwOSVersionInfoSize = info.StringValue(False).LenB
+		        Dim result As Integer = GetVersionExW( info )
+		        
+		        m_Major = info.dwMajorVersion
+		        m_Minor = info.dwMinorVersion
+		        m_Patch = info.dwBuildNumber
+		        If info.wProductType <> 1 Then
 		          m_IsServer = True
 		        End If
 		        
 		      Else
-		        Soft Declare Sub GetVersionExA Lib "Kernel32" ( ByRef info As m_WindowsOSVersionInfoEX )
+		        Soft Declare Function GetVersionExA Lib "Kernel32" ( ByRef info As m_WindowsOSVersionInfo ) As Integer
 		        
 		        Dim info As m_WindowsOSVersionInfo
-		        info.dwOSVersionInfoSize = info.StringValue.LenB
+		        info.dwOSVersionInfoSize = info.StringValue(False).LenB
 		        
-		        GetVersionExA( info )
+		        Dim result As Integer = GetVersionExA( info )
 		        
 		        m_Major = info.dwMajorVersion
 		        m_Minor = info.dwMinorVersion
@@ -177,6 +358,8 @@ Inherits Info.VersionInfo
 		        
 		      End If
 		      
+		    End If
+		    
 		  #EndIf
 		End Sub
 	#tag EndMethod
@@ -190,6 +373,10 @@ Inherits Info.VersionInfo
 		#tag EndGetter
 		IsServer As Boolean
 	#tag EndComputedProperty
+
+	#tag Property, Flags = &h1
+		Protected m_CachedOSName As String
+	#tag EndProperty
 
 	#tag Property, Flags = &h21
 		Private m_IsServer As Boolean
@@ -208,8 +395,7 @@ Inherits Info.VersionInfo
 		  dwMinorVersion as Uint32
 		  dwBuildNumber as Uint32
 		  dwPlatformId  as Uint32
-		  szCSDVersion as String*128
-		
+		szCSDVersion as String*256
 	#tag EndStructure
 
 	#tag Structure, Name = m_WindowsOSVersionInfoEX, Flags = &h21
@@ -218,7 +404,7 @@ Inherits Info.VersionInfo
 		  dwMinorVersion as Uint32
 		  dwBuildNumber  as Uint32
 		  dwPlatformId  as Uint32
-		  szCSDVersion as String*128
+		  szCSDVersion as String*256
 		  wServicePackMajor as Uint16
 		  wServicePackMinor as Uint16
 		  wSuiteMask as Uint16
@@ -275,6 +461,11 @@ Inherits Info.VersionInfo
 			Name="Patch"
 			Group="Behavior"
 			Type="Integer"
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="IsServer"
+			Group="Behavior"
+			Type="Boolean"
 		#tag EndViewProperty
 	#tag EndViewBehavior
 End Class

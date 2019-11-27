@@ -26,6 +26,54 @@ Begin Window Window1
    Title           =   "Untitled"
    Visible         =   True
    Width           =   600
+   Begin TextArea TextArea1
+      AcceptTabs      =   False
+      Alignment       =   0
+      AutoDeactivate  =   True
+      AutomaticallyCheckSpelling=   True
+      BackColor       =   &cFFFFFF00
+      Bold            =   False
+      Border          =   True
+      DataField       =   ""
+      DataSource      =   ""
+      Enabled         =   True
+      Format          =   ""
+      Height          =   360
+      HelpTag         =   ""
+      HideSelection   =   True
+      Index           =   -2147483648
+      Italic          =   False
+      Left            =   20
+      LimitText       =   0
+      LineHeight      =   0.0
+      LineSpacing     =   1.0
+      LockBottom      =   True
+      LockedInPosition=   False
+      LockLeft        =   True
+      LockRight       =   True
+      LockTop         =   True
+      Mask            =   ""
+      Multiline       =   True
+      ReadOnly        =   False
+      Scope           =   0
+      ScrollbarHorizontal=   False
+      ScrollbarVertical=   True
+      Styled          =   True
+      TabIndex        =   0
+      TabPanelIndex   =   0
+      TabStop         =   True
+      Text            =   ""
+      TextColor       =   &c00000000
+      TextFont        =   "System"
+      TextSize        =   0.0
+      TextUnit        =   0
+      Top             =   20
+      Transparent     =   False
+      Underline       =   False
+      UseFocusRing    =   True
+      Visible         =   True
+      Width           =   560
+   End
 End
 #tag EndWindow
 
@@ -34,24 +82,45 @@ End
 		Sub Open()
 		  Dim versionInfo As Info.VersionInfo 
 		  versionInfo = Info.OSVersionInfo // get the OS version information
-		  If versionInfo IsA Info.OSVersionInfo Then
-		    Break
+		  
+		  // ALL version info's have a major, minor, patch
+		  If versionInfo <> Nil Then
+		    TextArea1.AppendText "OS version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
+		    If versionInfo IsA Info.OSVersionInfo Then
+		      TextArea1.AppendText "Is Server = " + Str(Info.OSVersionInfo(versionInfo).IsServer) + EndOfLine
+		    End If
 		  End If
 		  
+		  Dim s As String = versionInfo
+		  TextArea1.AppendText s + EndOfLine
+		  
 		  Dim f As folderitem 
-		  f = New folderitem( "/usr/lib/libssl.dylib", folderitem.PathTypeNative ) // get the version info for this dll dylib etc
-		  Dim libInfo As Info.VersionInfo 
-		  libInfo = Info.LibraryVersionInfo(f)
-		  If libInfo IsA Info.LibVersionInfo Then
-		    Break
+		  #If targetMacOS
+		    f = New folderitem( "/usr/lib/libssl.dylib", folderitem.PathTypeNative ) // get the version info for this dylib 
+		  #ElseIf TargetWindows
+		    f = New folderitem( "C:\Windows\twain.dll", folderitem.PathTypeNative ) // get the version info for this dll 
+		  #Else
+		    ?
+		  #EndIf
+		  
+		  versionInfo = Info.LibraryVersionInfo(f)
+		  
+		  If versionInfo <> Nil Then
+		    TextArea1.AppendText f.NativePath + " version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
+		    If versionInfo IsA Info.LibVersionInfo Then
+		      Break
+		    End If
 		  End If
 		  
 		  f = New folderitem( "/Users/npalardy/Desktop/RB Test Projects/NSColorPanel Test.xojo_binary_project ", folderitem.PathTypeNative ) // get the version info for this dll dylib etc
-		  libInfo = Info.LibraryVersionInfo(f)
-		  If libInfo IsA Info.LibVersionInfo Then
-		    Break
+		  versionInfo = Info.LibraryVersionInfo(f)
+		  // can be NIL if the version info cannot be found
+		  If versionInfo <> Nil Then
+		    TextArea1.AppendText f.NativePath + " version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
+		    If versionInfo IsA Info.LibVersionInfo Then
+		      Break
+		    End If
 		  End If
-		  
 		End Sub
 	#tag EndEvent
 
