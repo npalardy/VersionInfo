@@ -80,49 +80,184 @@ End
 #tag WindowCode
 	#tag Event
 		Sub Open()
-		  Dim versionInfo As Info.VersionInfo 
-		  versionInfo = Info.OSVersionInfo // get the OS version information
+		  TestOSVersionInfo
 		  
-		  // ALL version info's have a major, minor, patch
-		  If versionInfo <> Nil Then
-		    TextArea1.AppendText "OS version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
-		    If versionInfo IsA Info.OSVersionInfo Then
-		      TextArea1.AppendText "Is Server = " + Str(Info.OSVersionInfo(versionInfo).IsServer) + EndOfLine
-		    End If
-		  End If
-		  
-		  Dim s As String = versionInfo
-		  TextArea1.AppendText s + EndOfLine
-		  
-		  Dim f As folderitem 
-		  #If targetMacOS
-		    f = New folderitem( "/usr/lib/libssl.dylib", folderitem.PathTypeNative ) // get the version info for this dylib 
-		  #ElseIf TargetWindows
-		    f = New folderitem( "C:\Windows\twain.dll", folderitem.PathTypeNative ) // get the version info for this dll 
-		  #Else
-		    ?
-		  #EndIf
-		  
-		  versionInfo = Info.LibraryVersionInfo(f)
-		  
-		  If versionInfo <> Nil Then
-		    TextArea1.AppendText f.NativePath + " version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
-		    If versionInfo IsA Info.LibVersionInfo Then
-		      Break
-		    End If
-		  End If
-		  
-		  f = New folderitem( "/Users/npalardy/Desktop/RB Test Projects/NSColorPanel Test.xojo_binary_project ", folderitem.PathTypeNative ) // get the version info for this dll dylib etc
-		  versionInfo = Info.LibraryVersionInfo(f)
-		  // can be NIL if the version info cannot be found
-		  If versionInfo <> Nil Then
-		    TextArea1.AppendText f.NativePath + " version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
-		    If versionInfo IsA Info.LibVersionInfo Then
-		      Break
-		    End If
-		  End If
+		  TestLibraryVersionInfo
 		End Sub
 	#tag EndEvent
+
+
+	#tag Method, Flags = &h1
+		Protected Sub TestLibraryDoesNotExist()
+		  // =====================================================
+		  // =====================================================
+		  // just so I can introduce a new scope level for testing
+		  If True Then
+		    
+		    // lets try a file that does not exist or has no version info to it
+		    Dim versionInfo As Info.VersionInfo 
+		    Dim f As folderitem 
+		    
+		    f = New folderitem( "/Users/npalardy/Desktop/RB Test Projects/Doesnt Exist Test.xojo_binary_project ", folderitem.PathTypeNative ) // get the version info for this dll dylib etc
+		    versionInfo = Info.LibraryVersionInfo(f)
+		    
+		    // using the factory method this 
+		    // can be NIL if the version info cannot be found
+		    If versionInfo <> Nil Then
+		      TextArea1.AppendText f.NativePath + " version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
+		      If versionInfo IsA Info.LibVersionInfo Then
+		        Break
+		      End If
+		    End If
+		  End If
+		  // =====================================================
+		  
+		  
+		  // =====================================================
+		  // =====================================================
+		  // just so I can introduce a new scope level for testing
+		  If True Then
+		    
+		    // lets try a file that does not exist or has no version info to it
+		    Dim versionInfo As Info.VersionInfo 
+		    Dim f As folderitem 
+		    
+		    f = New folderitem( "/Users/npalardy/Desktop/RB Test Projects/Doesnt Exist Test.xojo_binary_project ", folderitem.PathTypeNative ) // get the version info for this dll dylib etc
+		    Try
+		      // using the constructor this cannot be nil BUT
+		      // it can throw an exception !
+		      
+		      versionInfo = New Info.LibVersionInfo(f)
+		      
+		      TextArea1.AppendText f.NativePath + " version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
+		      If versionInfo IsA Info.LibVersionInfo Then
+		        Break
+		      End If
+		    Catch unsupported As UnsupportedOperationException
+		      Break
+		    End Try
+		    
+		  End If
+		  // =====================================================
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h1
+		Protected Sub TestLibraryExists()
+		  // =====================================================
+		  // =====================================================
+		  // just so I can introduce a new scope level for testing
+		  If True Then
+		    Dim versionInfo As Info.VersionInfo 
+		    Dim f As folderitem 
+		    #If targetMacOS
+		      f = New folderitem( "/usr/lib/libssl.dylib", folderitem.PathTypeNative ) // get the version info for this dylib 
+		    #ElseIf TargetWindows
+		      f = New folderitem( "C:\Windows\twain.dll", folderitem.PathTypeNative ) // get the version info for this dll 
+		    #Else
+		      ?
+		    #EndIf
+		    
+		    versionInfo = Info.LibraryVersionInfo(f)
+		    
+		    If versionInfo <> Nil Then
+		      TextArea1.AppendText f.NativePath + " version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
+		      If versionInfo IsA Info.LibVersionInfo Then
+		        Break
+		      End If
+		    End If
+		  End If
+		  // =====================================================
+		  
+		  
+		  
+		  // =====================================================
+		  // =====================================================
+		  // just so I can introduce a new scope level for testing
+		  If True Then
+		    Dim versionInfo As Info.VersionInfo 
+		    Dim f As folderitem 
+		    #If targetMacOS
+		      f = New folderitem( "/usr/lib/libssl.dylib", folderitem.PathTypeNative ) // get the version info for this dylib 
+		    #ElseIf TargetWindows
+		      f = New folderitem( "C:\Windows\twain.dll", folderitem.PathTypeNative ) // get the version info for this dll 
+		    #Else
+		      ?
+		    #EndIf
+		    
+		    // note you can use the constructor OR the factory method
+		    // either will work
+		    versionInfo = New Info.LibVersionInfo(f)
+		    
+		    If versionInfo <> Nil Then
+		      TextArea1.AppendText f.NativePath + " version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
+		      If versionInfo IsA Info.LibVersionInfo Then
+		        Break
+		      End If
+		    End If
+		  End If
+		  // =====================================================
+		  
+		  
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h1
+		Protected Sub TestLibraryVersionInfo()
+		  TestLibraryExists
+		  
+		  TestLibraryDoesNotExist
+		End Sub
+	#tag EndMethod
+
+	#tag Method, Flags = &h1
+		Protected Sub TestOSVersionInfo()
+		  // =====================================================
+		  // =====================================================
+		  // just so I can introduce a new scope level for testing
+		  If True Then
+		    Dim versionInfo As Info.VersionInfo 
+		    versionInfo = Info.OSVersionInfo // get the OS version information using the factory method
+		    
+		    // ALL version info's have a major, minor, patch
+		    If versionInfo <> Nil Then
+		      TextArea1.AppendText "OS version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
+		      If versionInfo IsA Info.OSVersionInfo Then
+		        TextArea1.AppendText "Is Server = " + Str(Info.OSVersionInfo(versionInfo).IsServer) + EndOfLine
+		      End If
+		    End If
+		    
+		    Dim s As String = versionInfo
+		    TextArea1.AppendText s + EndOfLine
+		  End If
+		  // =====================================================
+		  
+		  
+		  
+		  // =====================================================
+		  // =====================================================
+		  // just so I can introduce a new scope level for testing
+		  If True Then
+		    Dim versionInfo As Info.VersionInfo 
+		    
+		    versionInfo = New Info.OSVersionInfo // get the info using the constructor - either works
+		    
+		    // ALL version info's have a major, minor, patch
+		    If versionInfo <> Nil Then
+		      TextArea1.AppendText "OS version = " + Str(versionInfo.Major) + "." + Str(versionInfo.Minor) + "." + Str(versionInfo.patch) + EndOfLine
+		      If versionInfo IsA Info.OSVersionInfo Then
+		        TextArea1.AppendText "Is Server = " + Str(Info.OSVersionInfo(versionInfo).IsServer) + EndOfLine
+		      End If
+		    End If
+		    
+		    Dim s As String = versionInfo
+		    TextArea1.AppendText s + EndOfLine
+		  End If
+		  // =====================================================
+		  
+		End Sub
+	#tag EndMethod
 
 
 #tag EndWindowCode
