@@ -181,6 +181,7 @@ Inherits Info.VersionInfo
 		      End If
 		      
 		      Dim mb As New MemoryBlock(size)
+		      mb.LittleEndian = False
 		      
 		      Dim retValue As Integer = GetFileVersionInfoExW ( dwFlags, f.NativePath, unused, size, mb) 
 		      If retValue = 0 Then
@@ -189,25 +190,42 @@ Inherits Info.VersionInfo
 		      End If
 		      
 		      'struct LANGANDCODEPAGE {
-		      'WORD wLanguage;
-		      'WORD wCodePage;
+		      'WORD wLanguage; // Uint16
+		      'WORD wCodePage; // Uint16
 		      '} *lpTranslate;
 		      '
-		      '// Read the list of languages and code pages.
+		      // Read the list of languages and code pages.
 		      '
-		      'VerQueryValue(pBlock, 
-		      'Text("\\VarFileInfo\\Translation"),
-		      '(LPVOID*)&lpTranslate,
-		      '&cbTranslate);
-		      '
-		      'Dim bufPtr As Ptr
-		      'Dim bufLen As UInt32
-		      'retValue = VerQueryValueW( mb, "\StringFileInfo\"++"\FileVersion", bufPtr, bufLen)
-		      'If retValue = 0 Then
-		      'Break
-		      'Return
-		      'End If
-		      'Break
+		      Dim lplpBuffer As Ptr
+		      Dim puLen As UInt32
+		      retValue = VerQueryValueW(mb, "\", lplpBuffer, puLen) // "\VarFileInfo\Translation", lplpBuffer, puLen)
+		      
+		      If retValue = 0 Then
+		        Break
+		        Return
+		      End If
+		      
+		      Dim dwSignature As UInt32
+		      Dim dwStrucVersion As UInt32
+		      Dim dwFileVersionMS As UInt32
+		      Dim dwFileVersionLS As UInt32
+		      Dim dwProductVersionMS As UInt32
+		      Dim dwProductVersionLS As UInt32
+		      Dim dwFileFlagsMask As UInt32
+		      Dim dwFileFlags As UInt32
+		      Dim dwFileOS As UInt32
+		      Dim dwFileType As UInt32
+		      Dim dwFileSubtype As UInt32
+		      Dim dwFileDateMS As UInt32
+		      Dim dwFileDateLS as Uint32
+		      
+		      dwFileVersionMS = lplpBuffer.VS_FIXEDFILEINFO.dwFileVersionMS
+		      dwFileVersionLS = lplpBuffer.VS_FIXEDFILEINFO.dwFileVersionLS
+		      dwFileType = lplpBuffer.VS_FIXEDFILEINFO.dwFileType
+		      
+		      Self.m_Major = Bitwise.ShiftRight(dwFileVersionMS, 16) And &hFFFF
+		      Self.m_Minor = dwFileVersionMS And &hFFFF
+		      Self.m_Patch = Bitwise.ShiftRight(dwFileVersionLS, 16) And &hFFFF
 		      
 		    Elseif System.IsFunctionAvailable( "GetFileVersionInfoSizeExA", "Kernel32" ) Then
 		      Soft Declare Function GetFileVersionInfoSizeExA Lib "Kernel32" ( lptstrFilename As CString, ByRef lpdwHandle As UInt32) As UInt32
@@ -224,6 +242,38 @@ Inherits Info.VersionInfo
 		  #EndIf
 		End Sub
 	#tag EndMethod
+
+
+	#tag ComputedProperty, Flags = &h0
+		#tag Getter
+			Get
+			  Return m_bug
+			  
+			End Get
+		#tag EndGetter
+		Bug As Integer
+	#tag EndComputedProperty
+
+	#tag Property, Flags = &h21
+		Private m_Bug As Integer
+	#tag EndProperty
+
+
+	#tag Structure, Name = VS_FIXEDFILEINFO, Flags = &h0
+		dwSignature as Uint32
+		  dwStrucVersion as Uint32
+		  dwFileVersionMS as Uint32
+		  dwFileVersionLS as Uint32
+		  dwProductVersionMS as Uint32
+		  dwProductVersionLS  as Uint32
+		  dwFileFlagsMask as Uint32
+		  dwFileMask  as Uint32
+		  dwFileOS as Uint32
+		  dwFileType as Uint32
+		  dwFileSubType as Uint32
+		  dwFileDateMS as Uint32
+		dwFileDateLS  as Uint32
+	#tag EndStructure
 
 
 	#tag ViewBehavior

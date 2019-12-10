@@ -157,89 +157,81 @@ Inherits Info.VersionInfo
 		  #If TargetWindows
 		    
 		    If m_CachedOSName = "" Then
-		      
-		      ''From https://docs.microsoft.com/en-ca/windows/win32/api/winnt/ns-winnt-osversioninfoexa
-		      ''
-		      ''Operating System           Version number    dwMajorVersion    dwMinorVersion    Other
-		      ''Windows 10                    10.0*              10                 0            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
-		      ''Windows Server 2016           10.0*              10                 0            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
-		      ''Windows 8.1                    6.3*               6                 3            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
-		      ''Windows Server 2012 R2         6.3*               6                 3            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
-		      ''Windows 8                      6.2                6                 2            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
-		      ''Windows Server 2012            6.2                6                 2            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
-		      ''Windows 7                      6.1                6                 1            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
-		      '
-		      'Select Case True
-		      '
-		      'Case m_major = 10 
-		      '
-		      'If IsServer Then
-		      ''Windows Server 2016           10.0*              10                 0            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
-		      'Return "Windows Server 2016"
-		      'Else
-		      ''Windows 10                    10.0*              10                 0            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
-		      'return "Windows 10"
-		      'End If
-		      '
-		      'Case m_Major = 6
-		      '
-		      'Select Case m_minor
-		      '
-		      'Case 3
-		      'If IsServer Then
-		      ''Windows Server 2012 R2         6.3*               6                 3            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
-		      'Return "Windows Server 2012 R2"
-		      'Else
-		      ''Windows 8.1                    6.3*               6                 3            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
-		      'Return "Windows 8.1"
-		      'End If
-		      '
-		      'Case 2
-		      'If IsServer Then
-		      ''Windows Server 2012            6.2                6                 2            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
-		      'Return "Windows Server 2012"
-		      'Else
-		      ''Windows 8                      6.2                6                 2            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
-		      'Return "Windows 8"
-		      'End If
-		      '
-		      'Case 1
-		      'If IsServer Then
-		      ''Windows Server 2008 R2         6.1                6                 1            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
-		      'Return "Windows Server 2008 R2"
-		      'Else
-		      ''Windows 7                      6.1                6                 1            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
-		      'Return "Windows 7"
-		      'End If
-		      '
-		      'End Select
-		      '
-		      'End Select
-		      '
-		      'Return "Windows " + Str(m_Major) + "." + Str(m_Minor) + "." + Str(m_Patch)
-		      
-		      Dim s As New shell
-		      s.Execute "wmic os get Caption,CSDVersion /value"
-		      If s.errorcode <> 0 Then
-		        Return ""
-		      End If
-		      Dim lines() As String = Split( ReplaceLineEndings( s.result, EndOfLine ), EndOfLine )
-		      Dim captiontext As String
-		      Dim csdText As String
-		      
-		      For Each line As String In lines
+		      // we could do this in a way that we have to manually update all the time
+		      #if false
+		        ''From https://docs.microsoft.com/en-ca/windows/win32/api/winnt/ns-winnt-osversioninfoexa
+		        ''
+		        ''Operating System           Version number    dwMajorVersion    dwMinorVersion    Other
+		        ''Windows 10                    10.0*              10                 0            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		        ''Windows Server 2016           10.0*              10                 0            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		        ''Windows 8.1                    6.3*               6                 3            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		        ''Windows Server 2012 R2         6.3*               6                 3            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		        ''Windows 8                      6.2                6                 2            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
+		        ''Windows Server 2012            6.2                6                 2            OSVERSIONINFOEX.wProductType != VER_NT_WORKSTATION
+		        ''Windows 7                      6.1                6                 1            OSVERSIONINFOEX.wProductType == VER_NT_WORKSTATION
 		        
-		        If line.InStr("Caption=") > 0 Then
-		          Dim textOfInterest As String = ReplaceAll(line,"Caption=", "")
-		          captionText = textOfInterest.Trim
+		        Select Case True
+		        Case m_major = 10 
+		          If IsServer Then
+		            Return "Windows Server 2016"
+		          Else
+		            Return "Windows 10"
+		          End If
+		          
+		        Case m_Major = 6
+		          Select Case m_minor
+		          Case 3
+		            If IsServer Then
+		              Return "Windows Server 2012 R2"
+		            Else
+		              Return "Windows 8.1"
+		            End If
+		            
+		          Case 2
+		            If IsServer Then
+		              Return "Windows Server 2012"
+		            Else
+		              Return "Windows 8"
+		            End If
+		            
+		          Case 1
+		            If IsServer Then
+		              Return "Windows Server 2008 R2"
+		            Else
+		              Return "Windows 7"
+		            End If
+		            
+		          End Select
+		          
+		        End Select
+		        
+		        Return "Windows " + Str(m_Major) + "." + Str(m_Minor) + "." + Str(m_Patch)
+		      #Else
+		        // or we can query smic to get the right name !
+		        Dim s As New shell
+		        s.Execute "wmic os get Caption,CSDVersion /value"
+		        If s.errorcode <> 0 Then
+		          Return ""
 		        End If
-		        If line.InStr("CSDVersion=") > 0 Then
-		          Dim textOfInterest As String = ReplaceAll(line,"CSDVersion=", "")
-		          csdText = textOfInterest.Trim
-		        End If
-		      Next
+		        Dim lines() As String = Split( ReplaceLineEndings( s.result, EndOfLine ), EndOfLine )
+		        Dim captiontext As String
+		        Dim csdText As String
+		        
+		        For Each line As String In lines
+		          
+		          If line.InStr("Caption=") > 0 Then
+		            Dim textOfInterest As String = ReplaceAll(line,"Caption=", "")
+		            captionText = textOfInterest.Trim
+		          End If
+		          If line.InStr("CSDVersion=") > 0 Then
+		            Dim textOfInterest As String = ReplaceAll(line,"CSDVersion=", "")
+		            csdText = textOfInterest.Trim
+		          End If
+		        Next
+		        
+		        m_CachedOSName = captionText + " " + csdText
+		      #EndIf
 		      
-		      m_CachedOSName = captionText + " " + csdText
 		    End If
 		    
 		    Return m_CachedOSName
