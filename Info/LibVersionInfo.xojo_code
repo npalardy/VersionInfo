@@ -45,7 +45,7 @@ Inherits Info.VersionInfo
 		      // attempt #1 which may / may not work well in all cases
 		      
 		      Dim s As New shell
-		      s.execute "otool -L " + f.ShellPath
+		      s.execute "/usr/bin/otool -L " + f.ShellPath
 		      
 		      If s.ErrorCode <> 0 Then
 		        raise new UnsupportedOperationException
@@ -322,6 +322,11 @@ Inherits Info.VersionInfo
 		#tag EndViewProperty
 		#tag ViewProperty
 			Name="Patch"
+			Group="Behavior"
+			Type="Integer"
+		#tag EndViewProperty
+		#tag ViewProperty
+			Name="Bug"
 			Group="Behavior"
 			Type="Integer"
 		#tag EndViewProperty

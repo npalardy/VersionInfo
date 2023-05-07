@@ -49,61 +49,8 @@ Inherits Info.VersionInfo
 		  // wrapped just to make sure this code doesnt try to get compiled on other targets
 		  #If TargetMacOS
 		    
-		    If m_CachedOSName = "" Then
-		      
-		      'Dim rValue As String
-		      
-		      'NSString * operatingSystemVersionString = [[NSProcessInfo processInfo] operatingSystemVersionString];
-		      
-		      'Declare Function NSClassFromString Lib "Foundation" ( className As CFStringRef ) As Ptr
-		      'Declare Function processInfo Lib "Foundation" selector "processInfo" ( ClassRef As Ptr ) As Ptr
-		      '
-		      'Dim myInfo As Ptr = processInfo( NSClassFromString( "NSProcessInfo" ) )
-		      '
-		      'Declare Function operatingSystemVersionString Lib "Foundation" selector "operatingSystemVersionString" ( NSProcessInfo As Ptr ) As CFStringRef
-		      'rvalue = operatingSystemVersionString( myInfo )
-		      '
-		      ''Declare Function operatingSystemName Lib "Foundation" selector "operatingSystemName" ( NSProcessInfo As Ptr ) As CFStringRef
-		      ''rvalue = operatingSystemName( myInfo ) + " " + Str(m_Major) + "." + Str(m_Minor) + "." + Str(m_Patch)
-		      
-		      'Dim prefix As String
-		      '
-		      'If m_Minor <= 7 Then
-		      'prefix = "Mac OS X"
-		      'Elseif m_Minor <= 11 Then
-		      'prefix = "OS X"
-		      'Else
-		      'prefix = "macOS"
-		      'End If
-		      '
-		      'rValue = prefix  + " " + Str(m_Major) + "." + Str(m_Minor) + "." + Str(m_Patch)
-		      '
-		      'Return rValue
-		      
-		      Dim s As New shell
-		      s.Execute "/usr/sbin/system_profiler SPSoftwareDataType"
-		      
-		      If s.ErrorCode <> 0 Then
-		        Return ""
-		      End If
-		      
-		      Dim lines() As String = Split( ReplaceLineEndings( s.result, EndOfLine ), EndOfLine )
-		      
-		      For Each line As String In lines
-		        
-		        If line.InStr("System Version:") > 0 Then
-		          Dim textOfInterest As String = ReplaceAll(line,"System Version:", "")
-		          textOfInterest = textOfInterest.Trim
-		          
-		          m_CachedOSName = textOfInterest
-		          
-		        End If
-		        
-		      Next
-		      
-		    End If
-		    
 		    Return m_CachedOSName
+		    
 		  #EndIf
 		End Function
 	#tag EndMethod
@@ -125,6 +72,31 @@ Inherits Info.VersionInfo
 		    Me.m_Major = rValue.major
 		    Me.m_Minor = rValue.minor
 		    Me.m_Patch = rValue.bug
+		    
+		    Declare Function sysctlbyname Lib "/usr/lib/libSystem.dylib" (name As cString, out As ptr, ByRef size As UInteger, newP As ptr, newPSize As UInteger) As Integer
+		    
+		    Dim size As UInteger = 128
+		    Dim mb As New memoryblock(size)
+		    
+		    If sysctlbyname( "kern.osversion", mb, size, Nil, 0 ) = 0 Then
+		      m_build = Trim(mb.CString(0))
+		    End If
+		    
+		    // size = 256
+		    // mb = New memoryblock(size)
+		    // Dim retvalue As Integer = sysctlbyname( "machdep.cpu.brand_string", mb, size, Nil, 0 )
+		    // If sysctlbyname( "machdep.cpu.brand_string", mb, size, Nil, 0 ) = 0 Then
+		    // m_cputype = Trim(mb.CString(0))
+		    // End If
+		    
+		    Declare Function NSProcessInfo Lib "Foundation" Selector "processInfo" (ClassName As ptr) As ptr
+		    Declare Function NSVersionString Lib "Foundation" Selector "operatingSystemVersionString" (prInfo As ptr) As CFStringRef
+		    
+		    Dim NSClassName As ptr = NSClassFromString("NSProcessInfo")
+		    
+		    Dim NSProcInfo As ptr = NSProcessInfo( NSClassName )
+		    
+		    m_CachedOSName = NSversionString( NSProcInfo )
 		    
 		  #EndIf
 		End Sub
@@ -365,6 +337,10 @@ Inherits Info.VersionInfo
 		#tag EndGetter
 		IsServer As Boolean
 	#tag EndComputedProperty
+
+	#tag Property, Flags = &h1
+		Protected m_build As String
+	#tag EndProperty
 
 	#tag Property, Flags = &h1
 		Protected m_CachedOSName As String
